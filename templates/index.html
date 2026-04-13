@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="hero-section">
+  <div class="container text-center py-5">
+    <div class="hero-icon mb-3">
+      <i class="fas fa-hospital fa-4x text-cyan"></i>
+    </div>
+    <h1 class="display-5 fw-bold text-white mb-3">
+      Dynamic Hospital Queue<br>
+      <span class="text-cyan">Optimisation System</span>
+    </h1>
+    <p class="lead text-light mb-4 mx-auto" style="max-width:600px">
+      AI-powered patient queue management using Machine Learning.
+      Prioritises emergencies, predicts waiting times, and optimises doctor allocation in real time.
+    </p>
+    <a href="{{ url_for('login') }}" class="btn btn-cyan btn-lg px-5 shadow">
+      <i class="fas fa-sign-in-alt me-2"></i>Login to System
+    </a>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="py-5 bg-white">
+  <div class="container">
+    <h2 class="text-center fw-bold mb-5 text-navy">System Features</h2>
+    <div class="row g-4">
+      {% for icon, title, desc, col in [
+          ('brain','ML Prediction','Random Forest model predicts wait time per patient based on severity, age, queue load & hour','primary'),
+          ('bolt','Emergency Priority','Emergency patients jump the queue automatically — no manual override needed','danger'),
+          ('chart-bar','Live Analytics','Real-time charts: peak hour heatmaps, department load, waiting trend','success'),
+          ('user-md','Doctor Management','Toggle doctor availability; system recalculates all wait times instantly','info'),
+          ('file-pdf','PDF Reports','Download complete daily reports with patient log and ML metrics','warning'),
+          ('sms','SMS Notifications','Simulated SMS alerts keep patients informed of queue status','secondary')
+      ] %}
+      <div class="col-md-4 col-sm-6">
+        <div class="card h-100 border-0 shadow-sm feature-card">
+          <div class="card-body text-center p-4">
+            <div class="feature-icon bg-{{ col }}-subtle mb-3">
+              <i class="fas fa-{{ icon }} fa-2x text-{{ col }}"></i>
+            </div>
+            <h5 class="fw-bold">{{ title }}</h5>
+            <p class="text-muted small">{{ desc }}</p>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="py-5 bg-light">
+  <div class="container">
+    <h2 class="text-center fw-bold mb-5 text-navy">How It Works</h2>
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="timeline">
+          {% for step, icon, title, desc in [
+              ('1','user-plus','Patient Registration','Receptionist enters patient details: age, severity (1-5), emergency status, department.'),
+              ('2','robot','ML Prediction','Random Forest model predicts waiting time using 6 real-world features.'),
+              ('3','sort-amount-down','Queue Prioritisation','Priority score computed: Emergency → Severity → Predicted Wait.'),
+              ('4','sync','Dynamic Reordering','Queue reorders instantly when emergency arrives or doctor becomes available.'),
+              ('5','bell','Patient Notification','Simulated SMS sent to patient with queue number and estimated wait.'),
+              ('6','check-circle','Consultation & Analytics','Patient marked complete; dashboard charts update automatically.')
+          ] %}
+          <div class="timeline-item d-flex gap-3 mb-4">
+            <div class="timeline-badge bg-navy text-white">{{ step }}</div>
+            <div>
+              <h6 class="fw-bold mb-1"><i class="fas fa-{{ icon }} me-2 text-cyan"></i>{{ title }}</h6>
+              <p class="text-muted small mb-0">{{ desc }}</p>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

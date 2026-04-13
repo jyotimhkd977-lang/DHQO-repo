@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h4 class="fw-bold text-navy mb-1"><i class="fas fa-cog me-2"></i>Admin Dashboard</h4>
+      <small class="text-muted">Admin controls all staff credentials and doctor availability.</small>
+    </div>
+    <a href="{{ url_for('download_pdf') }}" class="btn btn-outline-danger">
+      <i class="fas fa-file-pdf me-1"></i>Download Report
+    </a>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+      <div class="stat-card bg-navy text-white">
+        <div class="stat-icon"><i class="fas fa-file-medical"></i></div>
+        <div class="stat-value">{{ stats.total_today }}</div>
+        <div class="stat-label">Forms Today</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="stat-card bg-warning text-dark">
+        <div class="stat-icon"><i class="fas fa-user-clock"></i></div>
+        <div class="stat-value">{{ stats.pending_reviews }}</div>
+        <div class="stat-label">Pending Review</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="stat-card bg-success text-white">
+        <div class="stat-icon"><i class="fas fa-list-ol"></i></div>
+        <div class="stat-value">{{ stats.approved_waiting }}</div>
+        <div class="stat-label">Approved Queue</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="stat-card bg-info text-white">
+        <div class="stat-icon"><i class="fas fa-id-card"></i></div>
+        <div class="stat-value">{{ stats.staff_accounts }}</div>
+        <div class="stat-label">Staff Logins</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-xl-6">
+      <div class="card border-0 shadow-sm mb-4 admin-form-card">
+        <div class="card-header bg-info text-white">
+          <i class="fas fa-user-plus me-2"></i>Create Staff Login
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            <input type="hidden" name="action" value="add_staff_user">
+            <div class="mb-3">
+              <label class="form-label">Full Name</label>
+              <input type="text" name="user_name" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Mobile Number</label>
+              <div class="input-group">
+                <span class="input-group-text">+91</span>
+                <input type="text" name="user_phone" class="form-control" maxlength="10" pattern="[6-9][0-9]{9}" required>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Password</label>
+              <input type="password" name="user_pass" class="form-control" minlength="4" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Role</label>
+              <input type="text" class="form-control" value="Receptionist" readonly>
+            </div>
+            <button class="btn btn-info text-white w-100">
+              <i class="fas fa-save me-1"></i>Create Login Credential
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-6">
+      <div class="card border-0 shadow-sm mb-4 admin-form-card">
+        <div class="card-header bg-navy text-white">
+          <i class="fas fa-user-md me-2"></i>Add Doctor To Roster
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            <input type="hidden" name="action" value="add_doctor">
+            <div class="mb-3">
+              <label class="form-label">Doctor Name</label>
+              <input type="text" name="doctor_name" class="form-control" placeholder="Dr. Full Name" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Department</label>
+              <select name="department" class="form-select" required>
+                {% for d in departments %}
+                <option>{{ d }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Doctor Number</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light">+91</span>
+                <input
+                  type="text"
+                  name="doctor_phone"
+                  class="form-control"
+                  placeholder="9XXXXXXXXX"
+                  maxlength="10"
+                  required
+                  pattern="[6-9][0-9]{9}"
+                >
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Password</label>
+              <input
+                type="password"
+                name="doctor_password"
+                class="form-control"
+                placeholder="Create doctor password"
+                minlength="4"
+                required
+              >
+            </div>
+            <button class="btn btn-navy w-100">
+              <i class="fas fa-plus me-1"></i>Add Doctor
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card border-0 shadow-sm mb-4 admin-data-card">
+        <div class="card-header bg-white fw-semibold border-bottom">
+          <i class="fas fa-users-cog me-2 text-primary"></i>Staff Credentials
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle admin-table">
+              <thead class="table-light">
+                <tr><th>Name</th><th>Role</th><th>Phone</th></tr>
+              </thead>
+              <tbody>
+                {% for user in staff_users %}
+                <tr>
+                  <td>{{ user.name }}</td>
+                  <td class="text-capitalize">{{ user.role }}</td>
+                  <td>{{ user.phone }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" class="text-center text-muted py-4">No staff credentials created yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mb-4 admin-data-card">
+        <div class="card-header bg-white fw-semibold border-bottom">
+          <i class="fas fa-stethoscope me-2 text-success"></i>Doctor Availability
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle admin-table">
+              <thead class="table-light">
+                <tr><th>Name</th><th>Department</th><th>Doctor Number</th><th>Patients Seen</th><th>Status</th><th>Action</th></tr>
+              </thead>
+              <tbody>
+                {% for doc in doctors %}
+                <tr>
+                  <td>{{ doc.name }}</td>
+                  <td>{{ doc.department }}</td>
+                  <td>{{ doc.phone or "-" }}</td>
+                  <td>{{ doc.patients_seen }}</td>
+                  <td>
+                    {% if doc.availability %}
+                    <span class="badge bg-success">Available</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Unavailable</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <form method="POST">
+                      <input type="hidden" name="action" value="toggle_doctor">
+                      <input type="hidden" name="doc_id" value="{{ doc.id }}">
+                      <button class="btn btn-sm {% if doc.availability %}btn-outline-warning{% else %}btn-outline-success{% endif %}">
+                        {% if doc.availability %}Set Unavailable{% else %}Set Available{% endif %}
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center text-muted py-4">No doctors in roster yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mb-4 admin-data-card">
+        <div class="card-header bg-white fw-semibold border-bottom d-flex justify-content-between align-items-center">
+          <span><i class="fas fa-list-ol me-2 text-navy"></i>Live Queue Snapshot</span>
+          <span class="badge bg-warning text-dark">{{ queue|length }} waiting</span>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle admin-table">
+              <thead class="table-light">
+                <tr><th>Q#</th><th>Patient</th><th>Department</th><th>Doctor</th><th>Severity</th><th>Wait</th></tr>
+              </thead>
+              <tbody>
+                {% for p in queue %}
+                <tr class="{% if p.emergency %}table-danger{% elif p.severity >= 4 %}table-warning{% endif %}">
+                  <td>#{{ p.queue_number }}</td>
+                  <td>{{ p.name }}</td>
+                  <td>{{ p.department }}</td>
+                  <td>{{ p.doctor_name or "Pending" }}</td>
+                  <td>{{ p.severity }}/5</td>
+                  <td>{{ p.predicted_wait }}m</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center text-muted py-4">No approved patients in queue.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm admin-data-card">
+        <div class="card-header bg-success text-white">
+          <i class="fas fa-sms me-2"></i>Recent SMS Log
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table mb-0 admin-table">
+              <thead class="table-light">
+                <tr><th>Patient</th><th>Phone</th><th>Message</th><th>Time</th></tr>
+              </thead>
+              <tbody>
+                {% for sms in sms_logs %}
+                <tr>
+                  <td>{{ sms.patient }}</td>
+                  <td>{{ sms.phone }}</td>
+                  <td><small class="text-muted">{{ sms.message }}</small></td>
+                  <td>{{ sms.sent_at or "-" }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-center text-muted py-4">No SMS sent yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <!-- PAGE HEADER -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="fw-bold text-navy mb-0"><i class="fas fa-tachometer-alt me-2"></i>Live Dashboard</h4>
+      <small class="text-muted" id="last-updated">Auto-refreshes every 10 seconds</small>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('download_pdf') }}" class="btn btn-sm btn-outline-danger">
+        <i class="fas fa-file-pdf me-1"></i>Download Report
+      </a>
+      <span class="badge bg-success fs-6 px-3 py-2">
+        <i class="fas fa-circle me-1 blink"></i>LIVE
+      </span>
+    </div>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="row g-3 mb-4" id="stat-cards">
+    <div class="col-xl-2 col-md-4 col-6">
+      <div class="stat-card bg-navy text-white">
+        <div class="stat-icon"><i class="fas fa-users"></i></div>
+        <div class="stat-value" id="stat-total">{{ total_today }}</div>
+        <div class="stat-label">Total Today</div>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+      <div class="stat-card bg-warning text-dark">
+        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+        <div class="stat-value" id="stat-waiting">{{ waiting_count }}</div>
+        <div class="stat-label">Waiting</div>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+      <div class="stat-card bg-danger text-white">
+        <div class="stat-icon"><i class="fas fa-ambulance"></i></div>
+        <div class="stat-value" id="stat-emergency">{{ emergency_count }}</div>
+        <div class="stat-label">Emergencies</div>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+      <div class="stat-card bg-success text-white">
+        <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
+        <div class="stat-value" id="stat-avgwait">{{ avg_wait }}<small>m</small></div>
+        <div class="stat-label">Avg Wait</div>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+      <div class="stat-card bg-info text-white">
+        <div class="stat-icon"><i class="fas fa-user-md"></i></div>
+        <div class="stat-value" id="stat-doctors">–</div>
+        <div class="stat-label">Docs Available</div>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+      <div class="stat-card bg-purple text-white">
+        <div class="stat-icon"><i class="fas fa-brain"></i></div>
+        <div class="stat-value">{{ r2 }}</div>
+        <div class="stat-label">ML R² Score</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUEUE TABLE + TREND CHART -->
+  <div class="row g-3 mb-4">
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-navy text-white d-flex justify-content-between align-items-center">
+          <span><i class="fas fa-list-ol me-2"></i>Live Priority Queue</span>
+          <span class="badge bg-warning text-dark" id="queue-badge">{{ queue|length }} waiting</span>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive" style="max-height:380px;overflow-y:auto;">
+            <table class="table table-sm table-hover mb-0 align-middle" id="queue-table">
+              <thead class="table-light sticky-top">
+                <tr>
+                  <th>Q#</th><th>Patient</th><th>Dept</th>
+                  <th>Sev</th><th>Wait</th><th>Priority</th>
+                </tr>
+              </thead>
+              <tbody id="queue-tbody">
+                {% for p in queue %}
+                <tr class="{% if p.emergency %}table-danger{% elif p.severity >= 4 %}table-warning{% endif %}">
+                  <td><strong>#{{ p.queue_number }}</strong></td>
+                  <td>
+                    {{ p.name }}
+                    {% if p.emergency %}<span class="badge bg-danger ms-1">EMRG</span>{% endif %}
+                  </td>
+                  <td><small>{{ p.department }}</small></td>
+                  <td>
+                    <div class="severity-bar">
+                      {% for i in range(5) %}
+                        <div class="s-dot {% if i < p.severity %}filled-{{ p.severity }}{% endif %}"></div>
+                      {% endfor %}
+                    </div>
+                  </td>
+                  <td><strong>{{ p.predicted_wait }}m</strong></td>
+                  <td><small class="text-muted">{{ (p.emergency|int * -100 + (6 - p.severity) * 10 + p.predicted_wait)|round(0)|int }}</small></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center text-muted py-4">No patients in queue</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white fw-semibold border-bottom">
+          <i class="fas fa-chart-line me-2 text-primary"></i>Waiting Time Trend
+        </div>
+        <div class="card-body d-flex align-items-center justify-content-center">
+          {% if trend_chart %}
+            <img src="{{ trend_chart }}" class="img-fluid rounded" alt="Trend chart">
+          {% else %}
+            <div class="text-center text-muted py-5">
+              <i class="fas fa-chart-line fa-3x mb-2 opacity-25"></i>
+              <p>No data yet today</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 3: CHARTS -->
+  <div class="row g-3 mb-4">
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white fw-semibold border-bottom">
+          <i class="fas fa-clock me-2 text-warning"></i>Peak Hour Analysis
+        </div>
+        <div class="card-body">
+          {% if peak_chart %}
+            <img src="{{ peak_chart }}" class="img-fluid" alt="Peak hours">
+          {% else %}
+            <p class="text-muted text-center py-4">No data yet</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white fw-semibold border-bottom">
+          <i class="fas fa-hospital me-2 text-success"></i>Department Load
+        </div>
+        <div class="card-body">
+          {% if dept_chart %}
+            <img src="{{ dept_chart }}" class="img-fluid" alt="Dept load">
+          {% else %}
+            <p class="text-muted text-center py-4">No data yet</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white fw-semibold border-bottom">
+          <i class="fas fa-brain me-2 text-purple"></i>ML Feature Importance
+        </div>
+        <div class="card-body">
+          <img src="{{ feature_chart }}" class="img-fluid" alt="Feature importance">
+          <div class="mt-2 p-2 bg-light rounded small">
+            <strong>R² Score:</strong> {{ r2 }} &nbsp;|&nbsp;
+            <strong>MAE:</strong> {{ mae }} min
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HEATMAP -->
+  {% if heatmap %}
+  <div class="row g-3">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white fw-semibold border-bottom">
+          <i class="fas fa-fire me-2 text-danger"></i>Hospital Load Heatmap — Department × Hour of Day
+        </div>
+        <div class="card-body">
+          <img src="{{ heatmap }}" class="img-fluid w-100" alt="Heatmap">
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Live AJAX refresh
+function refreshStats() {
+  fetch('/api/stats').then(r=>r.json()).then(d=>{
+    document.getElementById('stat-total').textContent    = d.total_today;
+    document.getElementById('stat-waiting').textContent  = d.waiting;
+    document.getElementById('stat-emergency').textContent= d.emergencies;
+    document.getElementById('stat-avgwait').innerHTML    = d.avg_wait+'<small>m</small>';
+    document.getElementById('stat-doctors').textContent  = d.doctors_avail+'/'+d.doctors_total;
+    document.getElementById('queue-badge').textContent   = d.waiting+' waiting';
+    document.getElementById('last-updated').textContent  =
+      'Last updated: ' + new Date().toLocaleTimeString('en-IN');
+  }).catch(()=>{});
+}
+
+function refreshQueue() {
+  fetch('/api/queue').then(r=>r.json()).then(data=>{
+    const tbody = document.getElementById('queue-tbody');
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No patients in queue</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(p => `
+      <tr class="${p.emergency ? 'table-danger' : p.severity>=4 ? 'table-warning' : ''}">
+        <td><strong>#${p.queue_num}</strong></td>
+        <td>${p.name}${p.emergency ? '<span class="badge bg-danger ms-1">EMRG</span>' : ''}</td>
+        <td><small>${p.department}</small></td>
+        <td><small>${'●'.repeat(p.severity)}${'○'.repeat(5-p.severity)}</small></td>
+        <td><strong>${p.wait}m</strong></td>
+        <td><small class="text-muted">${p.priority}</small></td>
+      </tr>`).join('');
+  }).catch(()=>{});
+}
+
+setInterval(()=>{ refreshStats(); refreshQueue(); }, 10000);
+</script>
+{% endblock %}

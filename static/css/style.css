@@ -1,0 +1,213 @@
+/* ============================================================
+   Hospital Queue Optimisation System — Main Stylesheet
+   ============================================================ */
+
+:root {
+  --navy:  #1e3a5f;
+  --cyan:  #00b4d8;
+  --purple: #7c3aed;
+  --soft-bg: #f0f4f8;
+}
+
+/* ── Base ── */
+body { background: var(--soft-bg); font-family: 'Segoe UI', system-ui, sans-serif; }
+
+/* ── Navbar ── */
+.bg-navy { background-color: var(--navy) !important; }
+.btn-navy { background-color: var(--navy); color: #fff; border: none; }
+.btn-navy:hover { background-color: #16304f; color: #fff; }
+.text-navy { color: var(--navy) !important; }
+.text-cyan  { color: var(--cyan)  !important; }
+.text-purple{ color: var(--purple)!important; }
+.bg-cyan  { background-color: var(--cyan) !important; }
+.bg-purple{ background-color: var(--purple) !important; }
+.btn-cyan { background-color: var(--cyan); color: #fff; border: none; }
+.btn-cyan:hover { background-color: #0096b7; color: #fff; }
+.notification-btn {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.notification-dot {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: 2px solid #fff;
+}
+.notification-menu {
+  width: 320px;
+  max-width: calc(100vw - 24px);
+}
+.notification-item {
+  white-space: normal;
+  border-top: 1px solid #eef2f7;
+}
+.notification-unread {
+  background: #eef6ff;
+}
+
+/* ── Hero Section ── */
+.hero-section {
+  background: linear-gradient(135deg, var(--navy) 0%, #16304f 40%, #0a1f3d 100%);
+  padding: 80px 0 60px;
+  clip-path: polygon(0 0, 100% 0, 100% 90%, 0 100%);
+}
+.hero-icon {
+  animation: pulse-icon 2s ease-in-out infinite;
+}
+@keyframes pulse-icon {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.08); opacity: 0.9; }
+}
+
+/* ── Feature Cards ── */
+.feature-card {
+  transition: transform .2s, box-shadow .2s;
+  border-radius: 12px;
+}
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0,0,0,.1) !important;
+}
+.feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px; height: 60px;
+  border-radius: 14px;
+  margin: 0 auto;
+}
+
+/* ── Timeline ── */
+.timeline-badge {
+  min-width: 34px; height: 34px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 14px;
+  flex-shrink: 0; margin-top: 2px;
+}
+
+/* ── Stat Cards ── */
+.stat-card {
+  border-radius: 14px;
+  padding: 18px 16px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,.08);
+  transition: transform .15s;
+}
+.stat-card:hover { transform: translateY(-3px); }
+.stat-icon { font-size: 1.5rem; margin-bottom: 6px; opacity: .85; }
+.stat-value { font-size: 1.9rem; font-weight: 800; line-height: 1; }
+.stat-value small { font-size: 1rem; font-weight: 500; }
+.stat-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; opacity: .8; }
+
+/* ── Card header override ── */
+.card { border-radius: 12px !important; }
+.card-header { border-radius: 12px 12px 0 0 !important; }
+
+/* ── Severity Pills ── */
+.severity-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 2px solid;
+  font-size: .78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  background: transparent;
+}
+.severity-pill.selected,
+.sev-radio:checked + .severity-pill {
+  background: var(--navy); color: #fff !important;
+  border-color: var(--navy) !important;
+}
+.severity-opt { cursor: pointer; }
+
+/* ── Blink animation for LIVE badge ── */
+.blink {
+  animation: blink-anim 1.2s step-start infinite;
+}
+@keyframes blink-anim {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* ── Severity dot bar ── */
+.severity-bar { display: flex; gap: 3px; align-items: center; }
+.s-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #e2e8f0;
+}
+.s-dot.filled-1 { background: #22c55e; }
+.s-dot.filled-2 { background: #84cc16; }
+.s-dot.filled-3 { background: #f59e0b; }
+.s-dot.filled-4 { background: #f97316; }
+.s-dot.filled-5 { background: #ef4444; }
+
+/* ── Table improvements ── */
+.table th { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: #64748b; }
+.table td { font-size: .88rem; vertical-align: middle; }
+
+/* ── Scrollable table container ── */
+.table-responsive { border-radius: 0 0 12px 12px; }
+
+/* ── Badges ── */
+.badge { font-size: .73rem; letter-spacing: .03em; }
+
+/* ── Alerts ── */
+.alert { border-radius: 10px; }
+
+/* ── Admin dashboard sizing ── */
+.admin-form-card .card-body {
+  padding: 1.5rem;
+}
+.admin-data-card .card-header {
+  padding: 1rem 1.25rem;
+  font-size: 1rem;
+}
+.admin-table th {
+  font-size: .82rem;
+  padding: .95rem 1rem;
+}
+.admin-table td {
+  font-size: .95rem;
+  padding: .95rem 1rem;
+}
+.admin-data-card .table-responsive {
+  max-height: none;
+}
+
+/* ── Patient form sizing ── */
+.patient-form-card .card-header {
+  padding: 1rem 1.25rem;
+  font-size: 1.05rem;
+}
+.patient-form-card .card-body {
+  padding: 1.75rem;
+}
+.patient-form-card .form-label {
+  font-size: .96rem;
+  margin-bottom: .55rem;
+}
+.patient-form-card .form-control,
+.patient-form-card .form-select,
+.patient-form-card .input-group-text {
+  min-height: 48px;
+  font-size: .98rem;
+}
+.patient-form-card textarea.form-control {
+  min-height: 96px;
+ }
+
+/* ── Mobile ── */
+@media (max-width: 576px) {
+  .stat-value { font-size: 1.5rem; }
+  .hero-section { padding: 50px 0 40px; clip-path: none; }
+}

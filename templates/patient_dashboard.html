@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h4 class="fw-bold text-navy mb-1"><i class="fas fa-user-injured me-2"></i>Patient Dashboard</h4>
+      <small class="text-muted">Submit your details, track review status, and download your digital prescription after treatment.</small>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm patient-form-card">
+        <div class="card-header bg-navy text-white">
+          <i class="fas fa-file-medical me-2"></i>Patient Form
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Full Name</label>
+              <input type="text" name="name" class="form-control" value="{{ session.name }}" required>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label fw-semibold">Age</label>
+                <input type="number" name="age" class="form-control" min="1" max="120" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-semibold">Phone</label>
+                <input type="text" name="phone" class="form-control" maxlength="10" pattern="[6-9][0-9]{9}" required>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Address</label>
+              <textarea name="address" rows="2" class="form-control" required></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Do you feel it is an emergency?</label>
+              <select name="emergency" class="form-select">
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Symptoms / What you felt</label>
+              <textarea name="symptoms" rows="4" class="form-control" placeholder="Explain symptoms, pain, discomfort, fever, breathing issue, dizziness, etc." required></textarea>
+            </div>
+            <button class="btn btn-navy w-100">
+              <i class="fas fa-paper-plane me-1"></i>Submit To Reception
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-white fw-semibold border-bottom">
+          <i class="fas fa-bell me-2 text-navy"></i>Latest Status
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="p-3 bg-light rounded h-100">
+                <div class="small text-muted">Review</div>
+                <div class="fw-bold text-capitalize">{{ latest.review_status.replace('_', ' ') if latest else "Pending" }}</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 bg-light rounded h-100">
+                <div class="small text-muted">Queue Number</div>
+                <div class="fw-bold">{{ latest.queue_number if latest and latest.queue_number else "Pending" }}</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 bg-light rounded h-100">
+                <div class="small text-muted">Assigned Doctor</div>
+                <div class="fw-bold">{{ latest.doctor_name if latest and latest.doctor_name else "Pending" }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-3 p-3 bg-light rounded">
+            <div><strong>Fake Detection (ML):</strong> {{ latest.fake_detection if latest and latest.fake_detection else "Low risk (12%) - looks genuine" }}</div>
+            <div><strong>Reception Note:</strong> {{ latest.review_note if latest and latest.review_note else "-" }}</div>
+            <div><strong>Status:</strong> {{ latest.status.replace('_', ' ') if latest else "pending review" }}</div>
+          </div>
+          {% if latest and latest.prescription_text %}
+          <div class="mt-3 p-3 border rounded bg-success-subtle">
+            <div class="fw-semibold mb-2">Digital Prescription Ready</div>
+            <div class="mb-2"><strong>Treatment:</strong> {{ latest.treatment }}</div>
+            <div class="mb-2"><strong>Suggestion:</strong> {{ latest.suggestion }}</div>
+            <div class="mb-3"><strong>Prescription:</strong> {{ latest.prescription_text }}</div>
+            <a href="{{ url_for('download_prescription', patient_id=latest.id) }}" class="btn btn-success">
+              <i class="fas fa-download me-1"></i>Download Prescription
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

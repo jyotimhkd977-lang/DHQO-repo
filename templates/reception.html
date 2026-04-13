@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <h4 class="fw-bold text-navy mb-4"><i class="fas fa-user-plus me-2"></i>Reception — Register Patient</h4>
+
+  <div class="row g-4">
+
+    <!-- REGISTRATION FORM -->
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-navy text-white">
+          <i class="fas fa-clipboard-list me-2"></i>New Patient Registration
+        </div>
+        <div class="card-body">
+          <form method="POST" id="register-form">
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Patient Full Name <span class="text-danger">*</span></label>
+              <input type="text" name="name" class="form-control" placeholder="e.g. Rahul Verma" required>
+            </div>
+
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label fw-semibold">Age <span class="text-danger">*</span></label>
+                <input type="number" name="age" class="form-control" min="1" max="120"
+                       placeholder="Age" required id="age-input">
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-semibold">Phone (Optional)</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light small">+91</span>
+                  <input type="text" name="phone" class="form-control"
+                         placeholder="9XXXXXXXXX" maxlength="10" pattern="[6-9][0-9]{9}">
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Severity Level <span class="text-danger">*</span></label>
+              <div class="d-flex gap-2 flex-wrap mb-1">
+                {% for i, label, col in [(1,'Mild','success'),(2,'Moderate','info'),(3,'Significant','warning'),(4,'Severe','orange'),(5,'Critical','danger')] %}
+                <label class="severity-opt">
+                  <input type="radio" name="severity" value="{{ i }}"
+                         {% if i = 3 %}checked{% endif %}
+                         onchange="updateWaitPreview()" class="d-none sev-radio">
+                  <span class="severity-pill border-{{ col }} text-{{ col }}">
+                    {{ i }} – {{ label }}
+                  </span>
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Emergency? <span class="text-danger">*</span></label>
+              <div class="d-flex gap-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="emergency"
+                         value="yes" id="emrg-yes" onchange="updateWaitPreview()">
+                  <label class="form-check-label text-danger fw-semibold" for="emrg-yes">
+                    🚨 YES — Emergency
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="emergency"
+                         value="no" id="emrg-no" checked onchange="updateWaitPreview()">
+                  <label class="form-check-label" for="emrg-no">No</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Department <span class="text-danger">*</span></label>
+              <select name="department" class="form-select" required id="dept-select"
+                      onchange="updateWaitPreview()">
+                {% for d in departments %}
+                <option>{{ d }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- LIVE WAIT PREVIEW -->
+            <div class="alert alert-info py-2 mb-3" id="wait-preview">
+              <i class="fas fa-robot me-2"></i>
+              <strong>Estimated Wait:</strong>
+              <span id="wait-value" class="fw-bold">–</span> minutes
+              <small class="text-muted d-block mt-1">Predicted by ML model in real time</small>
+            </div>
+
+            <button type="submit" class="btn btn-navy w-100 py-2 fw-semibold">
+              <i class="fas fa-check-circle me-2"></i>Register & Assign Queue Number
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIVE QUEUE SIDEBAR -->
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white fw-semibold border-bottom d-flex justify-content-between">
+          <span><i class="fas fa-list-ol me-2 text-navy"></i>Current Priority Queue</span>
+          <span class="badge bg-warning text-dark">{{ queue|length }} waiting</span>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive" style="max-height:520px;overflow-y:auto;">
+            <table class="table table-sm table-hover mb-0 align-middle">
+              <thead class="table-light sticky-top">
+                <tr>
+                  <th>Pos</th><th>Q#</th><th>Patient</th><th>Dept</th>
+                  <th>Severity</th><th>Wait</th><th>Arrival</th>
+                </tr>
+              </thead>
+              <tbody id="recep-queue-tbody">
+                {% for i, p in queue|enumerate %}
+                <tr class="{% if p.emergency %}table-danger{% elif p.severity >= 4 %}table-warning{% endif %}">
+                  <td>
+                    {% if loop.index == 1 %}<span class="badge bg-danger">1st</span>
+                    {% elif loop.index == 2 %}<span class="badge bg-warning text-dark">2nd</span>
+                    {% elif loop.index == 3 %}<span class="badge bg-info">3rd</span>
+                    {% else %}<span class="text-muted">{{ loop.index }}</span>{% endif %}
+                  </td>
+                  <td><strong>#{{ p.queue_number }}</strong></td>
+                  <td>
+                    {{ p.name }}
+                    {% if p.emergency %}<span class="badge bg-danger ms-1 small">EMRG</span>{% endif %}
+                  </td>
+                  <td><small>{{ p.department }}</small></td>
+                  <td>
+                    <div class="d-flex gap-1">
+                      {% for i in range(5) %}
+                        <div class="rounded-circle {% if i < p.severity %}bg-danger{% else %}bg-light border{% endif %}"
+                             style="width:9px;height:9px;"></div>
+                      {% endfor %}
+                    </div>
+                  </td>
+                  <td><span class="badge bg-primary">{{ p.predicted_wait }}m</span></td>
+                  <td><small>{{ p.arrival_time[11:16] if p.arrival_time else "–" }}</small></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center text-muted py-5">
+                  <i class="fas fa-check-circle fa-2x text-success mb-2 d-block"></i>
+                  Queue is empty — no patients waiting
+                </td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Real-time wait prediction preview
+function updateWaitPreview() {
+  const age      = parseInt(document.getElementById('age-input').value) || 30;
+  const sev      = parseInt(document.querySelector('.sev-radio:checked')?.value || 3);
+  const emrg     = document.getElementById('emrg-yes').checked ? 1 : 0;
+  const dept     = document.getElementById('dept-select').value;
+  const hour     = new Date().getHours();
+
+  fetch('/api/predict', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      severity: sev, age: age, emergency: emrg,
+      doc_available: 1, queue_length: 5, hour: hour
+    })
+  }).then(r=>r.json()).then(d=>{
+    document.getElementById('wait-value').textContent = d.predicted_wait;
+    const preview = document.getElementById('wait-preview');
+    preview.className = `alert py-2 mb-3 alert-${emrg ? 'danger' : d.predicted_wait > 40 ? 'warning' : 'info'}`;
+  }).catch(()=>{});
+}
+
+// Highlight severity pill on select
+document.querySelectorAll('.sev-radio').forEach(r => {
+  r.addEventListener('change', function() {
+    document.querySelectorAll('.severity-pill').forEach(p => p.classList.remove('selected'));
+    this.nextElementSibling.classList.add('selected');
+  });
+});
+
+// Auto-refresh queue every 15s
+setInterval(()=>{
+  fetch('/api/queue').then(r=>r.json()).then(data=>{
+    const tbody = document.getElementById('recep-queue-tbody');
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-5">Queue is empty</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map((p,i) => `
+      <tr class="${p.emergency ? 'table-danger' : p.severity>=4 ? 'table-warning' : ''}">
+        <td>${i===0?'<span class="badge bg-danger">1st</span>':i===1?'<span class="badge bg-warning text-dark">2nd</span>':i+1}</td>
+        <td><strong>#${p.queue_num}</strong></td>
+        <td>${p.name}${p.emergency?'<span class="badge bg-danger ms-1 small">EMRG</span>':''}</td>
+        <td><small>${p.department}</small></td>
+        <td>${'●'.repeat(p.severity)}${'○'.repeat(5-p.severity)}</td>
+        <td><span class="badge bg-primary">${p.wait}m</span></td>
+        <td><small>${p.arrival}</small></td>
+      </tr>`).join('');
+  });
+}, 15000);
+
+// Init preview
+document.getElementById('age-input').addEventListener('input', updateWaitPreview);
+updateWaitPreview();
+</script>
+{% endblock %}

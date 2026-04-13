@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h4 class="fw-bold text-navy mb-1">
+        <i class="fas fa-desktop me-2"></i>Receptionist Dashboard
+      </h4>
+      <small class="text-muted">Review patient forms and approve queue order.</small>
+    </div>
+    <a href="{{ url_for('download_pdf') }}" class="btn btn-outline-danger">
+      <i class="fas fa-file-pdf me-1"></i>Download Report
+    </a>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+      <div class="stat-card bg-navy text-white">
+        <div class="stat-icon"><i class="fas fa-file-medical"></i></div>
+        <div class="stat-value">{{ total_today }}</div>
+        <div class="stat-label">Forms Today</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="stat-card bg-warning text-dark">
+        <div class="stat-icon"><i class="fas fa-user-clock"></i></div>
+        <div class="stat-value">{{ pending_reviews }}</div>
+        <div class="stat-label">Pending Review</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="stat-card bg-danger text-white">
+        <div class="stat-icon"><i class="fas fa-ambulance"></i></div>
+        <div class="stat-value">{{ emergency_count }}</div>
+        <div class="stat-label">Emergency Queue</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="stat-card bg-success text-white">
+        <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
+        <div class="stat-value">{{ avg_wait }}<small>m</small></div>
+        <div class="stat-label">Avg Wait</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white fw-semibold border-bottom">
+          <i class="fas fa-user-check me-2 text-navy"></i>Pending Patient Forms
+        </div>
+        <div class="card-body">
+          {% if pending_patients %}
+          <div class="accordion" id="pendingForms">
+            {% for p in pending_patients %}
+            <div class="accordion-item mb-3 border rounded-3 overflow-hidden">
+              <h2 class="accordion-header">
+                <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#patient-{{ p.id }}">
+                  <div class="w-100 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span>
+                      <strong>{{ p.name }}</strong>
+                      <span class="badge bg-light text-dark ms-2">Department pending</span>
+                    </span>
+                    <span class="small text-muted">
+                      Severity pending | {{ p.arrival_time[11:16] if p.arrival_time else "-" }}
+                    </span>
+                  </div>
+                </button>
+              </h2>
+              <div id="patient-{{ p.id }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}" data-bs-parent="#pendingForms">
+                <div class="accordion-body">
+                  <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                      <div class="p-3 bg-light rounded h-100">
+                        <div class="small text-muted mb-2">Patient Details</div>
+                        <div><strong>Age:</strong> {{ p.age }}</div>
+                        <div><strong>Phone:</strong> {{ p.phone }}</div>
+                        <div><strong>Address:</strong> {{ p.address }}</div>
+                        <div><strong>Patient Marked Emergency:</strong> {{ "Yes" if p.emergency else "No" }}</div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="p-3 bg-light rounded h-100">
+                        <div class="small text-muted mb-2">Detection Summary</div>
+                        <div class="mb-2"><strong>Fake Detection (ML):</strong> {{ p.fake_detection_live }}</div>
+                        <div><strong>Emergency Prediction:</strong> {{ p.emergency_note }}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold">Symptoms / What patient felt</label>
+                    <div class="border rounded p-3 bg-white">{{ p.symptoms }}</div>
+                  </div>
+
+                  <div class="row g-3">
+                    <div class="col-lg-6">
+                      <form method="POST" class="border rounded-3 p-3 h-100 bg-success-subtle">
+                        <input type="hidden" name="action" value="review_patient">
+                        <input type="hidden" name="patient_id" value="{{ p.id }}">
+                        <input type="hidden" name="decision" value="approve">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                          <strong class="text-success">Approve Patient</strong>
+                          {% if p.emergency_prediction %}
+                          <span class="badge bg-danger">Predicted Emergency</span>
+                          {% endif %}
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">Department</label>
+                          <select name="department" class="form-select" required>
+                            <option value="">Select department</option>
+                            {% for d in departments %}
+                            <option value="{{ d }}">{{ d }}</option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">Severity</label>
+                          <select name="severity" class="form-select" required>
+                            <option value="">Select severity</option>
+                            <option value="1">1 - Mild</option>
+                            <option value="2">2 - Moderate</option>
+                            <option value="3">3 - Significant</option>
+                            <option value="4">4 - Severe</option>
+                            <option value="5">5 - Critical</option>
+                          </select>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">Receptionist Note</label>
+                          <textarea name="review_note" rows="3" class="form-control" placeholder="Queue note or approval note"></textarea>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">Emergency Queue Override</label>
+                          <select name="force_emergency" class="form-select">
+                            <option value="no">Normal queue</option>
+                            <option value="yes">Move to emergency priority</option>
+                          </select>
+                        </div>
+                        <button class="btn btn-success w-100">
+                          <i class="fas fa-check me-1"></i>Approve & Add to Queue
+                        </button>
+                      </form>
+                    </div>
+                    <div class="col-lg-6">
+                      <form method="POST" class="border rounded-3 p-3 h-100 bg-danger-subtle">
+                        <input type="hidden" name="action" value="review_patient">
+                        <input type="hidden" name="patient_id" value="{{ p.id }}">
+                        <input type="hidden" name="decision" value="reject">
+                        <div class="mb-2">
+                          <strong class="text-danger">Reject Patient Form</strong>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">Reason</label>
+                          <textarea name="review_note" rows="5" class="form-control" placeholder="Reason for rejection or suspected fake case" required></textarea>
+                        </div>
+                        <button class="btn btn-outline-danger w-100">
+                          <i class="fas fa-times me-1"></i>Reject Submission
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="text-center text-muted py-5">
+            <i class="fas fa-check-circle fa-3x mb-3 opacity-25"></i>
+            <p class="mb-0">No pending patient forms right now.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white fw-semibold border-bottom d-flex justify-content-between align-items-center">
+          <span><i class="fas fa-list-ol me-2 text-navy"></i>Approved Queue For Doctors</span>
+          <span class="badge bg-warning text-dark">{{ waiting_count }} waiting</span>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive" style="max-height: 420px; overflow-y: auto;">
+            <table class="table table-sm table-hover mb-0 align-middle">
+              <thead class="table-light sticky-top">
+                <tr>
+                  <th>Pos</th><th>Q#</th><th>Patient</th><th>Dept</th><th>Doctor</th><th>Severity</th><th>Wait</th>
+                </tr>
+              </thead>
+              <tbody id="recep-queue-tbody">
+                {% for p in queue %}
+                <tr class="{% if p.emergency %}table-danger{% elif p.severity >= 4 %}table-warning{% endif %}">
+                  <td>{{ loop.index }}</td>
+                  <td><strong>#{{ p.queue_number }}</strong></td>
+                  <td>
+                    {{ p.name }}
+                    {% if p.emergency %}<span class="badge bg-danger ms-1">Emergency</span>{% endif %}
+                  </td>
+                  <td>{{ p.department }}</td>
+                  <td>{{ p.doctor_name or "Pending" }}</td>
+                  <td>{{ p.severity }}/5</td>
+                  <td>{{ p.predicted_wait }}m</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center text-muted py-4">No approved patients in queue.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
